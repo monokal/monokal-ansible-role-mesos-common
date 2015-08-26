@@ -1,0 +1,49 @@
+---
+
+# Disable IPv6 as Mesos likes to bind to it by default.
+
+- name: disable_all_ipv6
+  sysctl:
+    name:       "net.ipv6.conf.all.disable_ipv6"
+    value:      1
+    sysctl_set: yes
+    reload:     yes
+
+- name: disable_default_ipv6
+  sysctl:
+    name:       "net.ipv6.conf.default.disable_ipv6"
+    value:      1
+    sysctl_set: yes
+    reload:     yes
+
+- name: disable_lo_ipv6
+  sysctl:
+    name:       "net.ipv6.conf.lo.disable_ipv6"
+    value:      1
+    sysctl_set: yes
+    reload:     yes
+
+# APT repos
+
+- name: add_mesosphere_apt_key
+  apt_key:
+    keyserver: hkp://keyserver.ubuntu.com:80
+    id:        E56151BF
+  register: add_mesosphere_apt_key
+
+# APT keys
+
+- name: add_mesosphere_apt_repo
+  when: add_mesosphere_apt_key|success
+  apt_repository:
+    repo:         "deb http://repos.mesosphere.io/{{ ansible_distribution|lower }} {{ ansible_distribution_release|lower }} main"
+    state:        present
+    update_cache: yes
+
+# Packages
+
+- name: install_packages
+  apt:
+    name: "{{ item }}"
+  with_items:
+    - "python-httplib2"
